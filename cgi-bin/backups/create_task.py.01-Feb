@@ -1,0 +1,202 @@
+#!C:\Users\shivdeep.modi\AppData\Local\Microsoft\WindowsApps\python.exe
+# Import modules for CGI handling 
+import os
+import sys
+import cgi
+import cgitb; cgitb.enable()
+import cx_Oracle
+#import db_config	
+
+#Add the user define python modules here. 'r' produces a raw string.
+sys.path.append(r"C:\Users\shivdeep.modi\OneDrive - IHS Markit\Shivdeep\Study\Python_study\Python_LIBPATH")
+
+import mydb
+
+# This is to debug
+#os.environ['QUERY_STRING'] = 'TASK_ID=1&TASK_NAME=TEST_TASK003&TASK_DESC=TEST_TASK003 Description&TASK_DATE=30-JAN-2021 07:21:00&TEST_TASK003&TASK_COMMENT=TEST_TASK00&PASSWD=acb123'
+#os.environ['QUERY_STRING'] = 'TASK_ID=1&TASK_NAME=TEST_TASK003&TASK_DESC=TEST_TASK003 Description&TASK_DATE=sysdate&TEST_TASK003&TASK_COMMENT=TEST_TASK00&PASSWD=acb123'
+#
+
+# Create instance of FieldStorage 
+form = cgi.FieldStorage() 
+
+cx_Oracle.init_oracle_client(lib_dir=r"C:\Users\shivdeep.modi\OneDrive - IHS Markit\Shivdeep\instantclient_19_9")
+
+
+# Get data from fields
+fTASK_ID      = form.getvalue('TASK_ID')
+fTASK_NAME    = form.getvalue('TASK_NAME')
+fTASK_DESC    = form.getvalue('TASK_DESC')
+fTASK_DATE    = form.getvalue('TASK_DATE')
+fTASK_COMMENT = form.getvalue('TASK_COMMENT')
+fPASSWD       = form.getvalue('PASSWD')
+fADD_SUBTASK  = form.getvalue('ADD_SUBTASK')
+fTASK_ASSIGNED= form.getvalue('TASK_ASSIGNED')
+
+if fPASSWD == 'quake2':
+		#print ("Date got :{}".format(fTASK_DATE))
+		#print(fPASSWD);
+		
+		# Begin function main_sysdate
+		def main_sysdate():
+			try:
+				with cx_Oracle.connect(
+							mydb.username,
+							mydb.password,
+							mydb.dsn,
+							encoding=mydb.encoding) as connection:
+					with connection.cursor() as cursor:
+						sqli = "insert into TASK_MAIN (TASKID, WORK_TASK ,WORK_TASK_DESC ,START_DATE ,COMPLETE_DATE ,TASK_CLOSE_DATE ,STATUS ,COMMENTS) values (:vTASK_ID,:vTASK_NAME,:vTASK_DESC,sysdate,NULL,NULL,'InProgress',:vTASK_COMMENT)";
+						#print (sqli)
+						cursor.execute(sqli, [fTASK_ID,fTASK_NAME,fTASK_DESC,fTASK_COMMENT]);
+						#Commit Now
+						connection.commit();
+			except cx_Oracle.Error as error:
+				print(error);
+				cgitb.handler();
+		
+		# End of function main_sysdate
+		
+		# Begin function main_other_date
+		def main_other_date():
+			try:
+				with cx_Oracle.connect(
+							mydb.username,
+							mydb.password,
+							mydb.dsn,
+							encoding=mydb.encoding) as connection:
+					with connection.cursor() as cursor:
+						sqli = "insert into TASK_MAIN (TASKID, WORK_TASK ,WORK_TASK_DESC ,START_DATE ,COMPLETE_DATE ,TASK_CLOSE_DATE ,STATUS ,COMMENTS) values (:vTASK_ID,:vTASK_NAME,:vTASK_DESC,to_date(:vTASK_DATE,'DD-MON-YYYY HH24:MI:SS'),NULL,NULL,'InProgress',:vTASK_COMMENT)";
+						#print (sqli)
+						cursor.execute(sqli, [fTASK_ID,fTASK_NAME,fTASK_DESC,fTASK_DATE,fTASK_COMMENT]);
+						#Commit Now
+						connection.commit();
+			except cx_Oracle.Error as error:
+				print(error);
+				cgitb.handler();
+		
+		# End of function main_sysdate
+		
+		
+		#sql = ('select * from sub where  work_task = :work_task and assigned = :assigned' )
+		#Implement like condition.
+		#sql = "select * from sub where  work_task like :work_task" + "||'%'"
+		
+		
+		##TASK_MAIN
+		##TASK_SUBTASK
+		##TASK_SUBTASK_DAILY
+		
+		
+		
+		sqlm = "select tl.description,tm.work_task, tm.work_task_desc, tm.start_date,tm.status,tm.comments from TASK_MAIN tm ,TASK_LIST tl where   tm.taskid = tl.taskid and tm.work_task = :v_TASK_NAME"
+		
+		
+		
+		#This also works
+		#sql = """select * from sub where  work_task = :work_task"""
+		
+		print ("Content-type:text/html\r\n\r\n"                     )
+		print ("<html>"                                             )
+		print ("<head>"                                             )
+		print ("<title>create_task</title>"                         )
+		print ("</head>"                                            )
+		print ("<STYLE type='text/css'>")  
+		print ("BODY {background: #AEF7DC;margin: 10px;}  ")
+		print ("TABLE {margin-bottom: 30px;}  ")
+		print("</STYLE>")
+		print ("<body >"                                            )
+		print("<table border=1>"                                             )
+		
+		print ("<tr><td>TASK_ID     : </td><td> {} </td></tr>".format(fTASK_ID,10) );
+		print ("<tr><td>TASK_NAME   : </td><td> {} </td></tr>".format(fTASK_NAME,50) );
+		print ("<tr><td>DESCRIPTION : </td><td> {} </td></tr>".format(fTASK_DESC,100) );		print ("<tr><td>START_DATE  : </td><td> {} </td></tr>".format(fTASK_DATE,20) )
+		print ("<tr><td>COMMENTS    : </td><td> {} </td></tr>".format(fTASK_COMMENT,500) )
+		
+		print("</table>"                                             )
+		##print ("</body>"                                        )
+		##print ("</html>"                                        )
+		#ssh tunnel is setup to connect to GIT56PD_LOV2_01
+		#db = cx_Oracle.connect("smodi", "SRXOQIwMjbCzr2GAiTj8#", "localhost:9999/GIT56PD_LOV2_01.info.corp")
+		#cursor = db.cursor()
+		#Connect using tnsnames entry
+		#db = cx_Oracle.connect("smodi", "SRXOQIwMjbCzr2GAiTj8#", "smodi_tunnel", encoding="UTF-8")
+		
+		#for row in cursor.execute(sql, [fTASK_NAME]):
+		#            print(row)
+		#        #cursor.close()
+		# datetime.now()
+		
+		
+		if fTASK_DATE == "sysdate":
+			main_sysdate()
+		else:
+			main_other_date()
+		
+		#print the inserted data now
+
+		print("<table border=1>"                                             )
+		
+		print ("<tr>"
+			+"<td colspan=5> {} </td>".format('MAIN TASK INFORMATION') 
+			+ "</tr>"
+			+"<tr>"
+			+"<td> {} </td>".format('TASK TYPE',10) 
+			+"<td> {} </td>".format('TASK NAME',50) 
+			+"<td> {} </td>".format('TASK DESCRIPTION',100) 
+			+"<td> {} </td>".format('START DATE',20) 
+			+"<td> {} </td>".format('COMMENTS',500)
+			+"</tr>"
+		);
+		
+		
+		
+		try:
+			with cx_Oracle.connect(
+						mydb.username,
+						mydb.password,
+						mydb.dsn,
+						encoding=mydb.encoding) as connection:
+				with connection.cursor() as cursor:
+					#Get Inserted data
+					cursor.execute(sqlm, [fTASK_NAME])
+					rows = cursor.fetchall()
+					if rows:
+						for row in rows:
+							#print(row)
+							#print ("<tr><td>TASK TYPE     : </td><td> {} </td></tr>".format(row[0],10) );
+							#print ("<tr><td>TASK_NAME   : </td><td> {} </td></tr>".format(row[1],50) );
+							#print ("<tr><td>TASK DESCRIPTION : </td><td> {} </td></tr>".format(row[2],100) );
+							#print ("<tr><td>START_DATE  : </td><td> {} </td></tr>".format(row[3],20) );
+							#print ("<tr><td>COMMENTS    : </td><td> {} </td></tr>".format(row[4],500) );
+							print ("<tr>"
+								+"<td> {} </td>".format(row[0],10) 
+								+"<td> {} </td>".format(row[1],50) 
+								+"<td> {} </td>".format(row[2],100) 
+								+"<td> {} </td>".format(row[3],20) 
+								+"<td> {} </td>".format(row[4],500)
+								+"</tr>"
+							);
+		
+		#select tl.description,tm.work_task, tm.work_task_desc, tm.start_date,tm.status,tm.comments from TASK_MAIN tm ,TASK_LIST tl where   tm.task_id = tl.task_id and tm.task_name = :v_TASK_NAME
+				
+		except cx_Oracle.Error as error:
+			print(error)	
+		
+		print("</table>"                                             )
+		#print('db.version:'+db.version)
+		print ("</body>"                                        )
+		print ("</html>"                                        )
+else:
+		print ("Content-type:text/html\r\n\r\n"                     )
+		print ("<html>"                                             )
+		print ("<head>"                                             )
+		print ("<title>create_task</title>"                         )
+		print ("</head>"                                            )
+		print ("<STYLE type='text/css'>"                            )  
+		print ("BODY {background: #AEF7DC;margin: 10px;}  "         )
+		print ("</STYLE>"                                            )
+		print ("<body >"                                            )
+		print ("<p> Invalid Password </p>")
+		print ("</body >"                                           )
+		print ("</html>"                                            )

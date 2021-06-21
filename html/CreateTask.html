@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<title>CreateTask</title>
+<head>
+ <link rel="stylesheet" href="/sme/html/styles.css">
+</head>
+<body background="/images/empty-wooden-table-with-natural-background-free-space-for-product-editing.jpg">
+
+<div class=d1>
+<strong>Create task</strong>
+</div>
+
+<form action="/cgi-bin/create_task.py" method="get">
+  
+  <div>
+  <label class='ht1' for="taskid" >Choose your Task Type:</label>
+  <select name="TASK_ID" id="taskid">
+      <option value="1">PRODSUP_INC</option>
+      <option value="2">PRODSUP_CHG</option>
+      <option value="3">PRODSUP_CHG_APPROVAL</option>
+      <option value="4">CLUSTER_BLD_INPREM</option>
+      <option value="5">CLUSTER_BLD_VMC</option>
+      <option value="6">PRODSUP_TASK</option>
+      <option value="7">DBUPG_19c</option>
+      <option value="8">ADHOC</option>
+      <option value="9">TEST_TASK</option>
+      <option value="10">PRODSUP_PROBLEM</option>
+      <option value="11">PRODSUP_PERF</option>
+	  <option value="12">STORAGE_SWING</option>
+	  <option value="13">Oracle SR</option>
+	  <option value="14">DATABASE_MOVE</option>
+	  <option value="15">DBUPG_18C</option>
+	  <option value="16">SME_CHG</option>
+  </select>
+  </div>
+  <div>
+  <label class="ht1">Enter Task Name:</label>
+  <input  maxlength="50" size="50" name="TASK_NAME">
+  </div>
+  <div>
+  <label class="ht1">Enter Task Description:</label>
+  <input  maxlength="50" size="50" name="TASK_DESC">
+  </div>
+  <div>
+  <label class="ht1">Enter Task Comments:</label>
+  <input  maxlength="500" size="50" name="TASK_COMMENT">
+  </div>  
+  <div>
+  <label class="ht1">Enter Task Date:</label>
+  <!-- <input  maxlength="500" size="50" name="TASK_DATE" type =hidden >  -->
+  <input type="date" id="theDate" name="theDate">
+  <input type="time" id="theTime" name="theTime"  min="00:00" max="23:59" required> 
+  
+  
+  </div>  
+  
+  <div>
+  <label class="ht1"> Enter Subtask Details? </label>
+  <label > Yes </label>
+  <input type="radio"  name="ADD_SUBTASK" value="YES" checked>
+  <label > No </label>
+  <input type="radio"  name="ADD_SUBTASK" value="NO" >
+  </div>
+
+  <div>
+  <label class="ht1">Enter SUB Work Task </label>
+  <input  maxlength="50" size="50" name="TASK_NAME_SUB" >
+  </div>
+  
+  <div>
+  <label class="ht1">Assigned:</label>
+  <input  maxlength="100" size="50" name="TASK_ASSIGNED" value="DEFAULT">
+  </div>  
+  
+  <div>
+  <label class="ht1">Password:</label>
+  <input type="password" name="PASSWD" id="PASSWD">
+  </div>  
+  
+  <p >
+  <input name="submit" type="submit">
+  </p>
+  <p >
+   <input name="Reset" value="Reset" type="reset">
+  <p>
+
+
+</form>
+
+<script>
+
+Date.prototype.dateToInput = function(){
+    return this.getFullYear() + '-' + ('0' + (this.getMonth() + 1)).substr(-2,2) + '-' + ('0' + this.getDate()).substr(-2,2);
+}
+Date.prototype.timeToInput = function(){
+    return  ('0' + (this.getHours())).substr(-2,2) + ':' + ('0' + this.getMinutes()).substr(-2,2);
+}
+
+var date = new Date();
+document.getElementById('theDate').value = date.dateToInput();
+document.getElementById('theTime').value = date.timeToInput();
+
+</script>
+
+</body>
+</html>

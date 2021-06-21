@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Show a Date Control</h1>
+
+<form action="/cgi-bin/test2.py" method='get' ">
+  <label for="birthday">Date:</label>
+  <input type="date" id="theDate" name="theDate">
+  <input type="time" id="theTime" name="theTime"  min="00:00" max="23:59" required> 
+   
+  <input type="submit">
+</form>
+<script>
+
+Date.prototype.dateToInput = function(){
+    return this.getFullYear() + "-" + ("0" + (this.getMonth() + 1)).substr(-2,2) + "-" + ("0" + this.getDate()).substr(-2,2);
+}
+Date.prototype.timeToInput = function(){
+    return  ("0" + (this.getHours())).substr(-2,2) + ":" + ("0" + this.getMinutes()).substr(-2,2);
+}
+
+var date = new Date();
+document.getElementById("theDate").value = date.dateToInput();
+document.getElementById("theTime").value = date.timeToInput();
+
+</script>
+
+</body>
+</html>
