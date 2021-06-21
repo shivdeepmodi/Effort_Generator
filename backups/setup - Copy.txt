@@ -1,0 +1,165 @@
+drop synonym main;
+drop synonym sub ;
+drop synonym daily ;
+
+drop package manage_efforts;
+drop table task_subtask_daily purge;
+drop table task_subtask purge;
+drop table task_main purge;
+
+drop table task_list purge;
+
+--
+-- task_list is the static reference table which lists the different categories on the tasks.
+-- This is more of use to link the task and task type for reporting purposes.
+-- This table is referenced by the setup
+create table task_list 
+(
+TASK_TYPE varchar(50), 
+TASKID number, 
+DESCRIPTION varchar2(100),
+CONSTRAINT pk_task_list PRIMARY KEY (taskid)
+)
+/
+alter table task_list modify TASK_TYPE constraint TASK_TYPE_NN not null;
+alter table task_list modify DESCRIPTION constraint DESCRIPTION_NN not null;
+
+insert into task_list values('PRODSUP_INC',1,'Production Support INC Support');
+insert into task_list values('PRODSUP_CHG',2,'Production Support CHG Support');
+insert into task_list values('PRODSUP_CHG_APPROVAL',3,'Production Support CHG Appproval');
+insert into task_list values('CLUSTER_BLD_INPREM',4,'In PREM Cluster/Host Build');
+insert into task_list values('CLUSTER_BLD_VMC',5,'VM Cluster/Host Build');
+insert into task_list values('PRODSUP_TASK',6,'Production Support TASK');
+insert into task_list values('DBUPG_19c',7,'Database Upgrade 19c');
+insert into task_list values('ADHOC',8,'Adhoc. Not under any head.');
+insert into task_list values('TEST_TASK',9,'For Testing');
+
+
+-- The main table for the tasks.
+--
+create table TASK_MAIN
+(
+TASKID number,
+WORK_TASK varchar2(50),
+WORK_TASK_DESC	varchar2(100),
+START_DATE date,
+COMPLETE_DATE date,
+TASK_CLOSE_DATE date,
+STATUS varchar2(20),
+COMMENTS  varchar2(500),
+constraint PK_WORK_TASK primary key (WORK_TASK),
+constraint FK_TASK_MAIN foreign key(TASKID) references TASK_LIST(TASKID)
+)
+PARTITION BY RANGE(START_DATE) (
+  partition TSK_MAIN_DEC_2020 values less than (TO_DATE('2021-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_JAN_2021 values less than (TO_DATE('2021-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_FEB_2021 values less than (TO_DATE('2021-03-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_MAR_2021 values less than (TO_DATE('2021-04-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_APR_2021 values less than (TO_DATE('2021-05-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_MAY_2021 values less than (TO_DATE('2021-06-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_JUN_2021 values less than (TO_DATE('2021-07-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_JUL_2021 values less than (TO_DATE('2021-08-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_AUG_2021 values less than (TO_DATE('2021-09-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_SEP_2021 values less than (TO_DATE('2021-10-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_OCT_2021 values less than (TO_DATE('2021-11-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_NOV_2021 values less than (TO_DATE('2021-12-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_DEC_2021 values less than (TO_DATE('2022-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_MAIN_JAN_2022 values less than (TO_DATE('2022-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) ,
+  partition TSK_MAIN_MAX values less than (MAXVALUE)
+);
+
+
+alter table task_main modify WORK_TASK constraint WORK_TASK_NN not null;
+alter table task_main modify WORK_TASK_DESC constraint WORK_TASK_DESC_NN not null;
+alter table task_main modify START_DATE constraint STRT_TM_NN not null;
+alter table task_main modify STATUS constraint STATUS_TM_NN not null;
+
+CREATE INDEX indx_dt_tsk_main ON task_main(START_DATE) LOCAL;
+CREATE INDEX indx_dt_tsk_status ON task_main(STATUS) GLOBAL;
+
+-- This table contains the subtasks for example a task for cluster build could have multiple teams involved
+-- The table is used to capture the tasks for different teams
+--
+create table task_subtask
+(
+WORK_TASK  varchar2(50),
+ASSIGNED   varchar2(100),
+START_DATE    date,
+COMPLETE_DATE  date,
+TASK_CLOSE_DATE date,
+STATUS  varchar2(20),
+COMMENTS  varchar2(500),
+CONSTRAINT pk_work_subt PRIMARY KEY (work_task,ASSIGNED),
+constraint fk_work_task foreign key(WORK_TASK) references task_main(WORK_TASK)
+)
+PARTITION BY RANGE(START_DATE) (
+  partition TSK_SUBT_DEC_2020 values less than (TO_DATE('2021-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JAN_2021 values less than (TO_DATE('2021-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_FEB_2021 values less than (TO_DATE('2021-03-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_MAR_2021 values less than (TO_DATE('2021-04-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_APR_2021 values less than (TO_DATE('2021-05-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_MAY_2021 values less than (TO_DATE('2021-06-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JUN_2021 values less than (TO_DATE('2021-07-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JUL_2021 values less than (TO_DATE('2021-08-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_AUG_2021 values less than (TO_DATE('2021-09-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_SEP_2021 values less than (TO_DATE('2021-10-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_OCT_2021 values less than (TO_DATE('2021-11-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_NOV_2021 values less than (TO_DATE('2021-12-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_DEC_2021 values less than (TO_DATE('2022-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JAN_2022 values less than (TO_DATE('2022-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) ,
+  partition TSK_SUBT_MAX values less than (MAXVALUE)
+);
+
+alter table task_subtask modify START_DATE  constraint TSK_SUBT_STRT_TS_NN not null;
+alter table task_subtask modify STATUS constraint STATUS_SUBT_STRT_TS_NN not null;
+
+CREATE INDEX indx_dt_tsk_sub ON task_subtask(START_DATE) LOCAL;
+CREATE INDEX indx_tsk_wrk_tsk ON task_subtask(WORK_TASK) GLOBAL;
+CREATE INDEX indx_tsk_sub_status ON task_subtask(STATUS) GLOBAL;
+
+
+-- This table capture granular efforts on daily basis
+--
+create table task_subtask_daily
+(
+WORK_TASK  varchar2(50),
+ASSIGNED   varchar2(100),
+START_DATE    date,
+COMPLETE_DATE  date,
+TASK_CLOSE_DATE date,
+STATUS    varchar2(20),
+COMMENTS  varchar2(500),
+constraint fk_work_tsk_sub_dly foreign key(WORK_TASK,ASSIGNED) references task_subtask(WORK_TASK,ASSIGNED)
+)
+PARTITION BY RANGE(START_DATE) (
+  partition TSK_SUBT_DEC_2020 values less than (TO_DATE('2021-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JAN_2021 values less than (TO_DATE('2021-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_FEB_2021 values less than (TO_DATE('2021-03-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_MAR_2021 values less than (TO_DATE('2021-04-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_APR_2021 values less than (TO_DATE('2021-05-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_MAY_2021 values less than (TO_DATE('2021-06-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JUN_2021 values less than (TO_DATE('2021-07-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JUL_2021 values less than (TO_DATE('2021-08-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_AUG_2021 values less than (TO_DATE('2021-09-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_SEP_2021 values less than (TO_DATE('2021-10-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_OCT_2021 values less than (TO_DATE('2021-11-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_NOV_2021 values less than (TO_DATE('2021-12-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_DEC_2021 values less than (TO_DATE('2022-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) , 
+  partition TSK_SUBT_JAN_2022 values less than (TO_DATE('2022-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')) ,
+  partition TSK_SUBT_MAX values less than (MAXVALUE)
+);
+
+alter table task_subtask_daily modify WORK_TASK      constraint TSK_ST_DLY_WRK_SK_NN   not null;
+alter table task_subtask_daily modify ASSIGNED       constraint TSK_ST_DLY_ASSIGNED_NN not null;
+alter table task_subtask_daily modify START_DATE  constraint TSK_ST_DLY_STRT_TS_NN  not null;
+alter table task_subtask_daily modify STATUS constraint TSK_ST_DLY_status_NN not null;
+
+create index INDX_DT_TSK_SUB_DLY on TASK_SUBTASK_DAILY(START_DATE) local;
+CREATE INDEX indx_tsk_sub_stsk_dly_wrk ON task_subtask_daily(WORK_TASK) GLOBAL;
+CREATE INDEX indx_tsk_sub_stsk_dly_status ON task_subtask_daily(STATUS) GLOBAL;
+
+create synonym main for TASK_MAIN;
+create synonym sub for task_subtask;
+create synonym daily for task_subtask_daily;
+-----
+

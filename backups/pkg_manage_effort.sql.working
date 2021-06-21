@@ -1,0 +1,100 @@
+create or replace package manage_efforts as
+procedure add_main_task
+(
+p_taskid in TASK_MAIN.TASKID%type,
+p_work_task in TASK_MAIN.work_task%type,
+p_work_desc in TASK_MAIN.WORK_TASK_DESC%type,
+p_started in date
+);
+
+procedure add_sub_task
+(
+p_work_task in task_subtask.work_task%type,
+p_assigned in task_subtask.assigned%type,
+p_started in date
+);
+
+procedure add_daily_effort
+(
+p_work_task in task_subtask.work_task%type,
+p_assigned in task_subtask.assigned%type,
+p_started in date
+);
+end manage_efforts;
+/
+
+create or replace package body manage_efforts as
+
+procedure add_main_task
+(
+p_taskid in TASK_MAIN.TASKID%type,
+p_work_task in TASK_MAIN.work_task%type,
+p_work_desc in TASK_MAIN.WORK_TASK_DESC%type,
+p_started in date
+)
+as
+row_ct number;
+begin
+ dbms_output.put_line('========================================================================');
+ dbms_output.put_line('Following Task is captured');
+ dbms_output.put_line('Task             :'||p_work_task);
+ dbms_output.put_line('Task Description :'||p_work_desc);
+ dbms_output.put_line('Date             :'||p_started);
+ dbms_output.put_line('========================================================================');
+ insert into TASK_MAIN (TASKID,WORK_TASK ,WORK_TASK_DESC,STARTED ,COMPLETED ,STATUS ,COMMENTS) values (p_taskid,p_work_task,p_work_desc,p_started,null,'InProgress',p_work_task);
+commit;
+end;
+
+procedure add_sub_task
+(
+p_work_task in task_subtask.work_task%type,
+p_assigned in task_subtask.assigned%type,
+p_started in date
+)
+as
+row_ct number;
+begin
+ dbms_output.put_line('========================================================================');
+ dbms_output.put_line('Following Sub-Task is captured');
+ dbms_output.put_line('Task             :'||p_work_task);
+ dbms_output.put_line('Assigned To      :'||p_assigned);
+ dbms_output.put_line('Date             :'||p_started);
+ dbms_output.put_line('========================================================================');
+ insert into task_subtask (WORK_TASK ,ASSIGNED,STARTED ,COMPLETED, STATUS ,COMMENTS) values (p_work_task,p_assigned,p_started,NULL,'InProgress',p_work_task);
+commit;
+end;
+
+procedure add_daily_effort
+(
+p_work_task in task_subtask.work_task%type,
+p_assigned in task_subtask.assigned%type,
+p_started in date
+)
+as
+row_ct number;
+begin
+select count(*) into row_ct
+  from task_subtask subt
+ where subt.work_task = p_work_task
+   and subt.assigned = p_assigned
+   and subt.completed is not null;
+if (row_ct = 1) then
+ dbms_output.put_line('========================================================================');
+ dbms_output.put_line('Task is not captured');
+ dbms_output.put_line('Task '||p_work_task||' assigned to '||p_assigned||' is already closed');
+ dbms_output.put_line('========================================================================');
+else
+ dbms_output.put_line('========================================================================');
+ dbms_output.put_line('Following daily task is captured');
+ dbms_output.put_line('Task     :'||p_work_task);
+ dbms_output.put_line('Assigned :'||p_assigned);
+ dbms_output.put_line('Date     :'||p_started);
+ dbms_output.put_line('========================================================================');
+ insert into task_subtask_daily (WORK_TASK,ASSIGNED,STARTED_DAILY,COMPLETED_DAILY,STATUS,COMMENTS  ) values (p_work_task,p_assigned,p_started,null,'InProgress',p_work_task);
+commit;
+end if;
+end;
+
+end manage_efforts;
+/
+
